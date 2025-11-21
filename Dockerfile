@@ -1,33 +1,26 @@
+# Use the official alpine image as the base
 FROM alpine:latest
 
 # Install nginx and git
-RUN apk update && apk add nginx git
+RUN apk update && \
+    apk add nginx git && \
+    rm -rf /var/cache/apk/*
 
-# Clone repo
+# Clone the target repository
+# Clone into a temporary directory
 RUN git clone https://github.com/veekrum/task /tmp/task_repo
 
-# Copy site folder
-RUN mkdir -p /usr/share/nginx/html
-RUN cp -r /tmp/task_repo/site /usr/share/nginx/html/
+# Copy the 'site' folder from the cloned repo to the default Nginx document root.
+# Nginx on alpine uses /usr/share/nginx/html as the default root.
+RUN cp -R /tmp/task_repo/site /usr/share/nginx/html/
 
-# Create nginx conf.d directory
-RUN mkdir -p /etc/nginx/conf.d
+# Clean up the temporary cloned repository
+RUN rm -rf /tmp/task_repo
 
-# Overwrite default nginx config using a heredoc
-RUN sh -c 'cat <<EOF > /etc/nginx/conf.d/default.conf
-server {
-    listen 80;
-    server_name localhost;
-    root /usr/share/nginx/html;
-    index index.html;
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
-}
-EOF'
+# Expose the default Nginx port (80)
+# Note: The mapping to 9000 on the host is done when running the container, not in the Dockerfile.
+EXPOSE 80
 
-# Expose port
-EXPOSE 9000
-
-# Start nginx
+# Command to run Nginx in the foreground
+# The -g 'daemon off;' is essential for running Nginx inside Docker.
 CMD ["nginx", "-g", "daemon off;"]
