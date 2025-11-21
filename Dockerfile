@@ -1,5 +1,6 @@
 FROM alpine:latest
 
+# Install nginx and git
 RUN apk update && apk add nginx git
 
 # Clone repo
@@ -9,15 +10,18 @@ RUN git clone https://github.com/veekrum/task /tmp/task_repo
 RUN mkdir -p /usr/share/nginx/html
 RUN cp -r /tmp/task_repo/site /usr/share/nginx/html/
 
+# Create nginx conf.d directory
+RUN mkdir -p /etc/nginx/conf.d
+
 # Overwrite default nginx config
-RUN echo 'server {\n\
-    listen 80;\n\
-    server_name localhost;\n\
-    root /usr/share/nginx/html;\n\
-    index index.html;\n\
-    location / {\n\
-        try_files $uri $uri/ =404;\n\
-    }\n\
+RUN echo 'server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    location / {
+        try_files $uri $uri/ =404;
+    }
 }' > /etc/nginx/conf.d/default.conf
 
 # Expose port
