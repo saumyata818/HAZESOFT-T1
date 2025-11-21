@@ -1,20 +1,27 @@
-# Use alpine image
 FROM alpine:latest
 
-# Install nginx and git
 RUN apk update && apk add nginx git
 
-# Clone the repo
+# Clone repo
 RUN git clone https://github.com/veekrum/task /tmp/task_repo
 
-# Create nginx html directory (if not exists)
-RUN mkdir -p /usr/share/nginx/html/
-
-# Copy the site folder into nginx root
+# Copy site folder
+RUN mkdir -p /usr/share/nginx/html
 RUN cp -r /tmp/task_repo/site /usr/share/nginx/html/
 
-# Expose port 9000
+# Overwrite default nginx config
+RUN echo 'server {\n\
+    listen 80;\n\
+    server_name localhost;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+    location / {\n\
+        try_files $uri $uri/ =404;\n\
+    }\n\
+}' > /etc/nginx/conf.d/default.conf
+
+# Expose port
 EXPOSE 9000
 
-# Run nginx with correct config
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
